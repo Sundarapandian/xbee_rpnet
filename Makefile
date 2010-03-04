@@ -14,6 +14,8 @@ CFLAGS ?= -Iarch/$(ARCH)/include -Ixbee/include -Wall
 CC := $(CROSS_COMPILE)gcc
 LD := $(CC)
 AS := $(CC)
+OBJCOPY  := $(CROSS_COMPILE)objcopy
+
 LIBS := -lpthread
 LDFLAGS := -static
 
@@ -25,10 +27,13 @@ ASRC = $(foreach dir,$(DIRS),$(shell find $(dir) -name "*.S"))
 OBJS = $(subst .c,.o,$(CSRC))
 OBJS += $(subst .S,.o,$(ASRC))
 
-all: $(TARGET)
+all: $(TARGET).elf $(TARGET).bin
 
-$(TARGET): $(OBJS) .deps
+$(TARGET).elf: $(OBJS) .deps
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+$(TARGET).bin: $(TARGET).elf
+	$(OBJCOPY) $(OCFLAGS) -O binary $^ $@
 
 .PHONY: clean distclean
 
