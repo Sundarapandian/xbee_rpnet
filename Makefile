@@ -39,7 +39,7 @@ $(TARGET).bin: $(TARGET).elf
 
 clean:
 	@echo "Cleaning object files..."
-	@-rm -f $(OBJS) $(TARGET)
+	@-rm -f $(OBJS) $(TARGET).elf $(TARGET).bin
 
 distclean: clean
 	@-rm -f .deps
