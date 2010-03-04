@@ -1,0 +1,20 @@
+                         Xbee RPNET 
+          XBEE base Remote Private Network (Mesh Network)
+                     (Sundar Andithevar)
+              <sundarapandian AT gmail D0T com>
+
+Introduction
+============
+	The basic idea of this project is to create a mesh network of XBee devices to transmit data from non-battery powered devices to a central co-ordinator (Using XBee RF device Version 2.5). Note that 1.x version will not support this feature and so don't even think about using this software on 1.x. I'll come up with more documentation soon. Stay tuned ;-)
+
+EXPLICIT WARNING:
+----------------
+         I DISCLAIM ALL RESPONSIBILITY FOR PROPER WORKING OF THIS SOFTWARE.  IF IT BACKFIRES ON YOU, DON'T COME RUNNING TO SQUISH ME.  YOU HAVE BEEN WARNED!!
+
+LICENCE:
+-------
+        This software has been released under GNU Pubic Licence. Read the file COPYING , which has been included with the distribution for details.  
+
+LATEST VERSIONS:
+---------------
+        You can get the latest version of this software from github. I'm still not very sure if it needs an entry in sourceforge!
