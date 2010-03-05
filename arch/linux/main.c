@@ -43,7 +43,7 @@ static int rx_print(const struct psock * ps)
 	val = dl_recv_frame(ps, buf, sizeof buf);
 	if (val <= 0) return 0; /* Let caller deal with err */
 
-	printf ("Rx_Thread: Received %d bytes from uart!\n", val);
+	dbg ("Rx_Thread: Received %d bytes from uart!\n", val);
 	for (i = 0; i < val; i++) {
 		printf ("%02X ", buf[i]);
 	}
@@ -129,8 +129,8 @@ static void * app_thread(void * arg)
 	}
 	/* Initialize global sockets */
 	//psock_init(&ps_bcast, iface, 0x0013A200, 0x4033234C, ADDR16_ANY, 0, 0, 0, PSOCK_PROFILE_DEFAULT, 0);
-	psock_init(&ps_bcast, (int) arg, ADDR64_BROADCAST_HI, ADDR64_BROADCAST_LO, 
-			ADDR16_ANY, 0, 0, 0, PSOCK_PROFILE_DEFAULT, 0);
+	psock_init(&ps_bcast, (int) arg, 0x0013A200, 0x4033234C,
+			0xFFFE, PS_EP_DATA, 0, PS_CID_LOOPBACK, PSOCK_PROFILE_DEFAULT, 0);
 	psock_local((int) arg, &ps_local, 0);
 
 	while(!end) {
@@ -160,10 +160,8 @@ int main(int cnt, char *vec[])
 
 	if (cnt < 2) {
 		err("Usage:\n"
-			"%s <UART device> <Rxx/Lxx>\n"
-			"UART device --> UART device node Ex: /dev/ttyS0\n"
-			"Rxx --> Execute AT command xx on Remote\n"
-			"Lxx --> Execute AT command xx on local\n",
+			"%s <UART device>\n"
+			"UART device --> UART device node Ex: /dev/ttyS0\n",
 			vec[0]);
 		return EXIT_FAILURE;
 	}
@@ -188,6 +186,6 @@ int main(int cnt, char *vec[])
 	pthread_join(t_app, NULL);
 
 	unlink(IN_PIPE_NAME);
-	printf ("APP: Exiting...\n");
+	dbg ("APP: Exiting...\n");
 	return EXIT_SUCCESS;
 }

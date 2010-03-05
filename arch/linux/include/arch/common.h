@@ -9,9 +9,6 @@
 /* Never ever ever... change the below value */
 #define MAX_DL_WINDOW_SZ  72
 
-/* Setting this will enable API MODE2 with Escaped characters */
-#undef API_MODE2
-
 #ifndef _BIT
 #define _BIT(x) (1U << (x))
 #endif

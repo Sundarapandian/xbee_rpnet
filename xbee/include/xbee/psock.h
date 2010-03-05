@@ -4,6 +4,23 @@
 #include "arch/common.h"
 
 /**
+ * List of endpoints supported by Xbee
+ **/
+#define PS_EP_DATAOBJECT      0x00
+#define PS_EP_USERBASE        0x01
+#define PS_EP_COMMAND         0xE6
+#define PS_EP_DATA            0xE8
+
+/**
+ * List of clustre IDs supported for PS_EP_DATA
+ **/
+#define PS_CID_SERIALDATA     0x11
+#define PS_CID_LOOPBACK       0x12
+#define PS_CID_IOSAMPLE       0x92
+#define PS_CID_SENSORSAMPLE   0x94
+#define PS_CID_NODEID         0x95
+
+/**
  * PS_FLAG_MULTICAST --> Selects Multicast/Unicast transfer mode
  * PS_FLAG_REMOTE    --> Internal: Identifies a remote socket
  * PS_FLAG_DISCARD_REPLY --> Discards reponse from remote (Used in AT command)

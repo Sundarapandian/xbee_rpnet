@@ -59,6 +59,14 @@ struct psock * psock_init(
 		return NULL;
 	}
 
+	if (dep == PS_EP_DATA &&
+		(cid != PS_CID_SERIALDATA && cid != PS_CID_LOOPBACK &&
+		 cid != PS_CID_IOSAMPLE && cid != PS_CID_SENSORSAMPLE &&
+		 cid != PS_CID_NODEID)) {
+		err("Invalid Cluster ID for endpoint %02x\n", dep);
+		return NULL;
+	}
+
 	memset(s, 0, sizeof *s);
 	s->hiface = h_iface[iface];
 

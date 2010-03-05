@@ -3,9 +3,12 @@
 #include "arch/uart.h"
 #include "xbee/api.h"
 
-static struct {
-	uint8_t ttl;
-}dl_param;
+/* dl_parameters structure */
+struct dl_param dl_param = {
+	DL_PARAM_TTL_DEFAULT,
+	DL_PARAM_APIMODE_DEFAULT,
+	DL_PARAM_AOMODE_DEFAULT
+};
 
 /**
  * Transmits the character to PHY layer
@@ -13,12 +16,10 @@ static struct {
  **/
 static void phy_putchar(void * handle, uint8_t ch)
 {
-#ifdef API_MODE2
-		if (is_esc_char(ch)) {
+		if (dl_param.mode_ap == API_MODE2 && is_esc_char(ch)) {
 			uart_xmit_char(handle, ESC_CHAR);
 			ch ^= 0x20;
 		}
-#endif
 		uart_xmit_char(handle, ch);
 }
 
@@ -103,7 +104,7 @@ err:
 int dl_tx_data(const struct psock * s, const uint8_t * buffer, int size)
 {
 	static uint8_t frame_no;
-	uint8_t buf[14 + size];
+	uint8_t buf[20 + size], *ptr;
 
 	/* Sanity Check */
 	if (s == NULL || !is_ps_valid(s) || (s->flags & PS_FLAG_LOCAL)) {
@@ -115,15 +116,25 @@ int dl_tx_data(const struct psock * s, const uint8_t * buffer, int size)
 		return -1;
 	}
 	buf[0] = API_ID_TX;
-	buf[1] = s->flags & PS_FLAG_DISCARD_REPLY ? 0 : ++frame_no;
-	memcpy(&buf[2], s->addr64, 8);
-	buf[10] = s->addr16[0];
-	buf[11] = s->addr16[1];
-	buf[12] = dl_param.ttl;
-	buf[13] = s->flags & PS_FLAG_MULTICAST ? 0x08 : 0x00;
-	memcpy(&buf[14], buffer, size);
+	ptr = &buf[1];
+	*ptr++ = s->flags & PS_FLAG_DISCARD_REPLY ? 0 : ++frame_no;
+	memcpy(ptr, s->addr64, 8); ptr += 8;
+	*ptr++ = s->addr16[0];
+	*ptr++ = s->addr16[1];
+	if (dl_param.mode_ao == 1) {
+		buf[0] = API_ID_TX_EXPLICIT;
+		*ptr++ = s->sep;    /* Source Endpoint */
+		*ptr++ = s->dep;    /* Destination Endpoint */
+		*ptr++ = 0;         /* Reserved byte */
+		*ptr++ = s->cid;    /* Cluster ID */
+		*ptr++ = s->prof_id[0];
+		*ptr++ = s->prof_id[1];
+	}
+	*ptr++ = dl_param.ttl;
+	*ptr++ = s->flags & PS_FLAG_MULTICAST ? 0x08 : 0x00;
+	memcpy(ptr, buffer, size); ptr += size;
 
-	return dl_send_data(s->hiface, buf, 14 + size);
+	return dl_send_data(s->hiface, buf, ptr - buf);
 }
 
 static uint8_t get_next_char(uint8_t **ptr)
@@ -190,10 +201,3 @@ int dl_recv_frame(const struct psock * s, uint8_t * buffer, int size)
 	return len;
 }
 
-/**
- * Set ttl parameter!
- **/
-void dl_set_param_ttl(uint8_t ttl)
-{
-	dl_param.ttl = ttl;
-}
