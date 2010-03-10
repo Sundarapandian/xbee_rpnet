@@ -130,7 +130,7 @@ static void * app_thread(void * arg)
 	/* Initialize global sockets */
 	//psock_init(&ps_bcast, iface, 0x0013A200, 0x4033234C, ADDR16_ANY, 0, 0, 0, PSOCK_PROFILE_DEFAULT, 0);
 	psock_init(&ps_bcast, (int) arg, 0x0013A200, 0x4033234C,
-			0xFFFE, PS_EP_DATA, 0, PS_CID_LOOPBACK, PSOCK_PROFILE_DEFAULT, 0);
+			ADDR16_ANY, PS_EP_DATA, PS_EP_DATA, PS_CID_LOOPBACK, PSOCK_PROFILE_DEFAULT, 0);
 	psock_local((int) arg, &ps_local, 0);
 
 	while(!end) {

@@ -140,12 +140,10 @@ int dl_tx_data(const struct psock * s, const uint8_t * buffer, int size)
 static uint8_t get_next_char(uint8_t **ptr)
 {
 	uint8_t ch;
-#ifdef API_MODE2
-	if (**ptr == ESC_CHAR) {
+	if (dl_param.mode_ap == API_MODE2 && **ptr == ESC_CHAR) {
 		(*ptr)++;
 		**ptr ^= 0x20;
 	}
-#endif
 	ch = **ptr;
 	(*ptr)++;
 	return ch;
@@ -171,12 +169,14 @@ int dl_recv_frame(const struct psock * s, uint8_t * buffer, int size)
 	p1 = p2 = buffer;
 	cnt = val;
 
+	dbg("Received %d bytes\n", cnt);
 	/* Remove leading junk chars */
 	while (*p1++ != API_HEADER && cnt--);
+
 	/* Sanity check: We need atleast 4 bytes after header
 	   to consider it as a valid packet! */
 	if (cnt - 4 <= 0) {
-		err("Dropping invalid packet!\n");
+		err("Dropping invalid packet of size = %d!\n", cnt);
 		return -1;
 	}
 
