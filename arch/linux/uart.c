@@ -43,8 +43,6 @@ int uart_init(const char * dev)
 	cfmakeraw(&tios);
 	cfsetospeed(&tios, SYSTEM_BAUD);
 	cfsetispeed(&tios, SYSTEM_BAUD);
-	tios.c_cc[VMIN] = 100;
-	tios.c_cc[VTIME] = 1;
 	if (tcsetattr(fd, TCSANOW, &tios) < 0) {
 		err("Unable to setattr for %s: %s\n", dev, strerror(errno));
 		return -1;
@@ -84,7 +82,19 @@ int uart_xmit_char(void * handle, uint8_t ch)
 /**
  * Reads a buffer of bytes from UART
  **/
-int uart_recv_buffer(void * handle, uint8_t * buf, int size)
+int uart_getchar(void * handle, int timeout)
 {
-	return read((int)handle, buf, size);
+	uint8_t ch;
+	struct termios tios;
+	if (tcgetattr((int) handle, &tios) < 0)
+		return -1;
+	tios.c_cc[VMIN] = timeout == UART_WAIT_FOREVER;
+	tios.c_cc[VTIME] = timeout;
+	if (tcsetattr((int)handle, TCSANOW, &tios) < 0)
+		return -1;
+
+	if (read((int)handle, &ch, sizeof(ch)) <= 0)
+		return -1;
+
+	return (int)ch;
 }

@@ -137,15 +137,16 @@ int dl_tx_data(const struct psock * s, const uint8_t * buffer, int size)
 	return dl_send_data(s->hiface, buf, ptr - buf);
 }
 
-static uint8_t get_next_char(uint8_t **ptr)
+static uint8_t get_next_char(void * iface, int timeout)
 {
-	uint8_t ch;
-	if (dl_param.mode_ap == API_MODE2 && **ptr == ESC_CHAR) {
-		(*ptr)++;
-		**ptr ^= 0x20;
+	int ch;
+	ch = uart_getchar(iface, timeout);
+	if (ch < 0) return -1;
+	if (dl_param.mode_ap == API_MODE2 && ch == ESC_CHAR) {
+		ch = uart_getchar(iface, timeout);
+		if (ch < 0) return -1;
+		ch ^= 0x20;
 	}
-	ch = **ptr;
-	(*ptr)++;
 	return ch;
 }
 
@@ -154,46 +155,31 @@ static uint8_t get_next_char(uint8_t **ptr)
  **/
 int dl_recv_frame(const struct psock * s, uint8_t * buffer, int size)
 {
-	int val, cnt, i;
+	int i, lhi, llo;
 	uint16_t len;
-	uint8_t *p1, *p2;
 	uint16_t crc = 0;
 
 	/* Get data from Physical device */
-	val = uart_recv_buffer(s->hiface, buffer, size);
-	if (val <= 0) {
-		err("dl_recv_frame: phy read error\n");
+	while(uart_getchar(s->hiface, UART_WAIT_FOREVER) != API_HEADER);
+
+	lhi = get_next_char(s->hiface, TIMER_MS(20));
+	llo = get_next_char(s->hiface, TIMER_MS(20));
+	if (lhi < 0 || llo < 0)
 		return -1;
-	}
 
-	p1 = p2 = buffer;
-	cnt = val;
+	/* Calculate length and process rest of data */
+	len = ((lhi & 0xFF) << 8) | (llo & 0xFF);
 
-	dbg("Received %d bytes\n", cnt);
-	/* Remove leading junk chars */
-	while (*p1++ != API_HEADER && cnt--);
-
-	/* Sanity check: We need atleast 4 bytes after header
-	   to consider it as a valid packet! */
-	if (cnt - 4 <= 0) {
-		err("Dropping invalid packet of size = %d!\n", cnt);
-		return -1;
-	}
-
-	len = (get_next_char(&p1) << 8) | get_next_char(&p1);
-
-	/* Sanity Check: Do we have sufficient data in packet? */
-	if (&p1[len] > &buffer[val]) {
-		err("Dropping short packet!\n");
-		return -1;
-	}
 	for(i = 0; i < len; i++) {
-		uint8_t ch = get_next_char(&p1);
+		int ch = get_next_char(s->hiface, TIMER_MS(20));
+		if (ch < 0) return -1;
 		crc += ch;
-		*p2++ = ch;
+		buffer[i] = ch;
 	}
+
+	/* Validate CRC of the packet */
 	crc = (0xFF - crc) & 0xFF;
-	if (crc != get_next_char(&p1)) {
+	if (crc != get_next_char(s->hiface, TIMER_MS(20))) {
 		err("CRC Failure. Dropping packet!\n");
 		return -1;
 	}
