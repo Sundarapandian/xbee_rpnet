@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "arch/uart.h"
+#include "arch/config.h"
 
 /**
  * Exports for top layer interface
@@ -26,7 +26,7 @@ int uart_init(const char * dev)
 	dbg("Initializing interface %d...", nr_iface);
 
 	if (nr_iface >= MAX_IFACE) {
-		err("Invalid interface %d should be less MAX supported is %d\n", 
+		err("Invalid interface %d should be less MAX supported is %d\n",
 				nr_iface, MAX_IFACE-1);
 		return -1;
 	}
@@ -74,7 +74,7 @@ int uart_uninit(void)
 /**
  * Sends out a single character to UART interface
  **/
-int uart_xmit_char(void * handle, uint8_t ch)
+int uart_putchar(void * handle, uint8_t ch)
 {
 	return write((int)handle, &ch, 1);
 }

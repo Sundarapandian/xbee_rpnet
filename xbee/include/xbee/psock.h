@@ -1,7 +1,7 @@
 #ifndef _PSOCK_H
 #define _PSOCK_H
 
-#include "arch/common.h"
+#include "arch/config.h"
 
 /**
  * List of endpoints supported by Xbee

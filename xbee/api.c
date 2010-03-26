@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "arch/uart.h"
+#include "arch/config.h"
 #include "xbee/api.h"
 
 /* dl_parameters structure */
@@ -17,10 +17,10 @@ struct dl_param dl_param = {
 static void phy_putchar(void * handle, uint8_t ch)
 {
 		if (dl_param.mode_ap == API_MODE2 && is_esc_char(ch)) {
-			uart_xmit_char(handle, ESC_CHAR);
+			iface_putchar(handle, ESC_CHAR);
 			ch ^= 0x20;
 		}
-		uart_xmit_char(handle, ch);
+		iface_putchar(handle, ch);
 }
 
 /**
@@ -30,7 +30,7 @@ static void phy_putchar(void * handle, uint8_t ch)
 static int dl_send_data(void * handle, const uint8_t * data, int size)
 {
 	unsigned int crc = 0, i;
-	uart_xmit_char(handle, API_HEADER); /* Emit frame header */
+	iface_putchar(handle, API_HEADER); /* Emit frame header */
 	phy_putchar(handle, (size >> 8) & 0xFF); /* Emit MSB of size */
 	phy_putchar(handle, size & 0xFF); /* Emit MSB of Size */
 	for (i = 0; i < size; i++) { /* Emit LSB of size */
@@ -140,10 +140,10 @@ int dl_tx_data(const struct psock * s, const uint8_t * buffer, int size)
 static uint8_t get_next_char(void * iface, int timeout)
 {
 	int ch;
-	ch = uart_getchar(iface, timeout);
+	ch = iface_getchar_timeout(iface, timeout);
 	if (ch < 0) return -1;
 	if (dl_param.mode_ap == API_MODE2 && ch == ESC_CHAR) {
-		ch = uart_getchar(iface, timeout);
+		ch = iface_getchar_timeout(iface, timeout);
 		if (ch < 0) return -1;
 		ch ^= 0x20;
 	}
@@ -160,7 +160,7 @@ int dl_recv_frame(const struct psock * s, uint8_t * buffer, int size)
 	uint16_t crc = 0;
 
 	/* Get data from Physical device */
-	while(uart_getchar(s->hiface, UART_WAIT_FOREVER) != API_HEADER);
+	while(iface_getchar(s->hiface) != API_HEADER);
 
 	lhi = get_next_char(s->hiface, TIMER_MS(20));
 	llo = get_next_char(s->hiface, TIMER_MS(20));
