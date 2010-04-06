@@ -153,11 +153,12 @@ static uint8_t get_next_char(void * iface, int timeout)
 /**
  * Receives a frame from physical device
  **/
-int dl_recv_frame(const struct psock * s, uint8_t * buffer, int size)
+int dl_recv_frame(const struct psock * s, struct rx_pkt * rx)
 {
 	int i, lhi, llo;
 	uint16_t len;
 	uint16_t crc = 0;
+	uint8_t * buffer = (uint8_t *) rx;
 
 	/* Get data from Physical device */
 	while(iface_getchar(s->hiface) != API_HEADER);

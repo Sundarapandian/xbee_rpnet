@@ -35,22 +35,7 @@ static void app_sig_handler(int sig_id)
 	pthread_cancel(t_app);
 }
 
-static int rx_print(const struct psock * ps)
-{
-	int val, i;
-	uint8_t buf[RX_BUF_SZ];
-
-	val = dl_recv_frame(ps, buf, sizeof buf);
-	if (val <= 0) return 0; /* Let caller deal with err */
-
-	dbg ("Rx_Thread: Received %d bytes from uart!\n", val);
-	for (i = 0; i < val; i++) {
-		printf ("%02X ", buf[i]);
-	}
-	printf ("\n");
-
-	return val;
-}
+extern rx_handler(struct psock *);
 
 /**
  * Listening thread! Listening will happen mainly on a local interface
@@ -72,7 +57,7 @@ static void * rx_thread(void *arg)
 	}
 
 	while (!end) {
-		int ret = rx_print(&ps);
+		int ret = rx_handler(&ps);
 		if (ret && !(err = 0)) continue;
 		err ++;
 		if (err >= MAX_ERR) {
@@ -130,7 +115,7 @@ static void * app_thread(void * arg)
 	/* Initialize global sockets */
 	//psock_init(&ps_bcast, iface, 0x0013A200, 0x4033234C, ADDR16_ANY, 0, 0, 0, PSOCK_PROFILE_DEFAULT, 0);
 	psock_init(&ps_bcast, (int) arg, ADDR64_BROADCAST_HI, ADDR64_BROADCAST_LO,
-			ADDR16_ANY, PS_EP_DATA, PS_EP_DATA, PS_CID_LOOPBACK, PSOCK_PROFILE_DEFAULT, 0);
+			ADDR16_ANY, 0, 0, 0, PSOCK_PROFILE_DEFAULT, 0);
 	psock_local((int) arg, &ps_local, 0);
 
 	while(!end) {

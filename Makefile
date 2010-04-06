@@ -11,13 +11,14 @@ ARCH ?= linux
 DIRS := xbee \
 		arch/$(ARCH)
 CFLAGS ?= -Iarch/$(ARCH)/include -Ixbee/include -Wall
+CFLAGS += $(shell mysql_config --cflags)
 CC := $(CROSS_COMPILE)gcc
 LD := $(CC)
 AS := $(CC)
 OBJCOPY  := $(CROSS_COMPILE)objcopy
 
-LIBS := -lpthread
-LDFLAGS := -static
+LIBS := -lpthread $(shell mysql_config --libs)
+LDFLAGS := 
 
 include arch/$(ARCH)/config.mk
 

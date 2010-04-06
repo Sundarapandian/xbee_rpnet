@@ -39,7 +39,7 @@
  **/
 #define DL_PARAM_TTL_DEFAULT        0x00
 #define DL_PARAM_APIMODE_DEFAULT    API_MODE2
-#define DL_PARAM_AOMODE_DEFAULT     0x01
+#define DL_PARAM_AOMODE_DEFAULT     0x00
 
 /**
  * Return true if x is FRAME_HEADER (0x7E) or ESC_CHAR (0x7D)
@@ -59,11 +59,94 @@ struct dl_param {
 
 extern struct dl_param dl_param;
 
+enum modem_stat {
+	MODEM_STAT_HW_RST = 0,
+	MODEM_STAT_WDT_RST,
+	MODEM_STAT_ASSOC,
+	MODEM_STAT_DISASSOC,
+	MODEM_STAT_SYNC_LOST,
+	MODEM_STAT_COORD_REALIGN,
+	MODEM_STAT_COORD_START,
+};
+
+struct modem_status {
+	uint8_t status;
+}__attribute__((packed));
+
+enum at_response_status {
+	AT_OK = 0,
+	AT_ERROR,
+	AT_CMD_INV,
+	AT_PARAM_INV,
+};
+
+struct at_response {
+	uint8_t frame_id;
+	uint8_t cmd[2];
+	uint8_t status;
+	uint8_t data[BUF_SIZE];
+}__attribute__((packed));
+
+struct at_remote_response {
+	uint8_t frame_id;
+	uint8_t addr64[8];
+	uint8_t addr16[2];
+	uint8_t cmd[2];
+	uint8_t status;
+	uint8_t data[BUF_SIZE];
+}__attribute__((packed));
+
+enum delivery_status {
+	TX_STAT_OK = 0,
+	TX_STAT_ERR_CCA,
+	TX_STAT_ERR_EP,
+	TX_STAT_ERR_ACK,
+	TX_STAT_ERR_NONET,
+	TX_STAT_ERR_SELF,
+	TX_STAT_ERR_NOADDR,
+	TX_STAT_ERR_NOROUTE,
+};
+
+enum discovery_status {
+	DIS_STAT_OK = 0,
+	DIS_ADDR,
+	DIS_ROUTE,
+	DIS_ROUTEADDR,
+};
+
+struct tx_status {
+	uint8_t frame_id;
+	uint8_t addr16[2];
+	uint8_t retry_cnt;
+	uint8_t dlvry_stat;
+	uint8_t disc_stat;
+};
+
+struct rx_data0 {
+	uint8_t addr64[8];
+	uint8_t addr8[2];
+	uint8_t type;
+	uint8_t data[BUF_SIZE];
+};
+
+struct rx_pkt {
+	uint8_t id;
+	union {
+		struct modem_status mstat;
+		struct tx_status txstat;
+		struct at_response atr;
+		struct at_remote_response ratr;
+		struct rx_data0  rx0;
+		uint8_t raw[BUF_SIZE];
+	}pkt;
+};
+
+#define ATVAL(x,y) (((x) << 8) | (y))
 #ifdef __cplusplus
 extern "C" {
 #endif
 	int dl_send_at_command(const struct psock * s, const uint8_t * cmd);
-	int dl_recv_frame(const struct psock * s, uint8_t * buff, int size);
+	int dl_recv_frame(const struct psock * s, struct rx_pkt * rx);
 	int dl_tx_data(const struct psock * s, const uint8_t * buff, int size);
 	void dl_set_param_ttl(uint8_t ttl);
 #ifdef __cplusplus
