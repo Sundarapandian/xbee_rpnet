@@ -61,7 +61,7 @@ int handle_data(const struct rx_data0 * rx)
 {
 	static MYSQL *conn;
 	static char query[500];
-	const char * buffer = (const char *)rx->data;
+	const struct rx_frame *x = (const struct rx_frame *)rx->data;
 	if (conn == NULL) {
 		if ((conn = db_connect()) < 0) {
 			err ("Unable to connect database!\n");
@@ -69,14 +69,18 @@ int handle_data(const struct rx_data0 * rx)
 		}
 		dbg("Database Connection successful!\n");
 	}
-	if (*buffer++ == '<') {
+	if (x->start == '<') {
 		snprintf(query, sizeof(query) -1, "insert into userdata values("
 			"\'%02X%02X%02X%02X%02X%02X%02X%02X\', \'%d\', NOW())",
 			rx->addr64[0],rx->addr64[1],rx->addr64[2], rx->addr64[3],
 			rx->addr64[4],rx->addr64[5],rx->addr64[6], rx->addr64[7],
-			*(uint32_t *) buffer
-			);
-		printf ("%s", query);
+			(x->value[0] << 24) | (x->value[1] << 16) |
+			(x->value[2] << 8) | x->value[3]);
+		/* send SQL query */
+		if (mysql_query(conn, query)) {
+			fprintf(stderr, "%s\n", mysql_error(conn));
+			return -1;
+		}
 	}
 	return 0;
 }

@@ -129,6 +129,11 @@ struct rx_data0 {
 	uint8_t data[BUF_SIZE];
 };
 
+struct rx_frame {
+	uint8_t  start;
+	uint8_t value[4];
+}__attribute__((packed));
+
 struct rx_pkt {
 	uint8_t id;
 	union {
